@@ -62,6 +62,14 @@ function initialize(){
   gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
 
   const uRes = gl.getUniformLocation(program, 'u_resolution');
+  const observer = new ResizeObserver(() => {
+    canvas.width = canvas.clientWidth * 3.0;
+    canvas.height = canvas.clientHeight * 3.0;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(uRes, canvas.width, canvas.height);
+  });
+
+  observer.observe(canvas);
   const uTime = gl.getUniformLocation(program, 'u_time');
   gl.uniform2f(uRes, canvas.width, canvas.height);
 
