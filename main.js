@@ -6,6 +6,8 @@
 import vertexShaderSrc from './vertex.glsl.js';
 import fragmentShaderSrc from './fragment.glsl.js';
 
+const resizing = 3.0;
+
 /////////////////////////////////////////////////////
 // Create the Program
 function createProgram(gl, vshader, fshader){
@@ -40,8 +42,8 @@ function createShader(gl, type, source){
 function initialize(){
   // screen setup
   const canvas = document.querySelector('canvas');
-  canvas.width = canvas.clientWidth * 3.0;
-  canvas.height = canvas.clientHeight * 3.0;
+  canvas.width = canvas.clientWidth * resizing;
+  canvas.height = canvas.clientHeight * resizing;
   const gl = canvas.getContext('webgl2');
   gl.viewport(0, 0, canvas.width, canvas.height);
 
@@ -63,8 +65,8 @@ function initialize(){
 
   const uRes = gl.getUniformLocation(program, 'u_resolution');
   const observer = new ResizeObserver(() => {
-    canvas.width = canvas.clientWidth * 3.0;
-    canvas.height = canvas.clientHeight * 3.0;
+    canvas.width = canvas.clientWidth * resizing;
+    canvas.height = canvas.clientHeight * resizing;
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.uniform2f(uRes, canvas.width, canvas.height);
   });
