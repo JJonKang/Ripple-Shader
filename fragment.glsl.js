@@ -1,4 +1,5 @@
 // current heavy inspiration from https://www.shadertoy.com/view/ldfyzl
+// aid from https://iquilezles.org/
 export default `#version 300 es
 precision mediump float;
 
@@ -23,8 +24,13 @@ uniform float u_time;
 
 out vec4 fragColor;
 
+float smoothQuintic(float a, float b, float c) {
+  float x = clamp((c - a) / (b - a), 0.0, 1.0); //between 0-1
+  return x * x * x * x * (x * (x * 6.0 - 15.0) + 10.0);
+}
+
 void main() {
-  vec2 uv = gl_FragCoord.xy / u_resolution.y * 10.0;
+  vec2 uv = gl_FragCoord.xy / u_resolution.y * 6.0;
   // vec2 center = vec2(0.0, 0.0);
   vec2 p0 = floor(uv);  
   vec2 circles = vec2(0.0, 0.0);
@@ -40,8 +46,8 @@ void main() {
       float h = 1e-3;
       float d1 = d - h;
       float d2 = d + h;
-      float p1 = sin(31.0 * d1) * smoothstep(-0.6, -0.3, d1) * smoothstep(0.0, -0.3, d1);
-      float p2 = sin(31.0 * d2) * smoothstep(-0.6, -0.3, d2) * smoothstep(0.0, -0.3, d2);
+      float p1 = sin(31.0 * d1) * smoothQuintic(-0.6, -0.3, d1) * smoothQuintic(0.0, -0.3, d1);
+      float p2 = sin(31.0 * d2) * smoothQuintic(-0.6, -0.3, d2) * smoothQuintic(0.0, -0.3, d2);
       circles += 0.5 * normalize(v) * ((p2 - p1) / (2.0 * h) * (1.0 - t) * (1.0 - t));
     }
   }
