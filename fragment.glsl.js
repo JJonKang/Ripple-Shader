@@ -4,6 +4,7 @@ export default `#version 300 es
 precision mediump float;
 
 #define CELL 2
+#define numOctaves 2
 #define HASHSCALE1 .1031
 #define HASHSCALE3 vec3(.1031, .1030, .0973)
 
@@ -26,12 +27,47 @@ out vec4 fragColor;
 
 float smoothQuintic(float a, float b, float c) {
   float x = clamp((c - a) / (b - a), 0.0, 1.0); //between 0-1
-  return x * x * x * x * (x * (x * 6.0 - 15.0) + 10.0);
+  float s = x * x * x * (x * (x * 6.0 - 15.0) + 10.0);
+  return pow(s, 1.2);
+}
+
+float noise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+  return mix(
+    mix(hash12(i),             hash12(i + vec2(1,0)), u.x),
+    mix(hash12(i + vec2(0,1)), hash12(i + vec2(1,1)), u.x),
+    u.y
+  );
+}
+
+// fractional brownian motion
+float fbm( in vec2 x, in float H ){
+  float r = 0.0;
+  float G = exp2(-H);
+  float a = 1.0;
+  float f = 1.0;
+  for (int i = 0; i < numOctaves; i++){
+    r += a * noise(f * x);
+    f *= 2.0;
+    a *= G;
+  }
+  return r;
+}
+
+// warping
+float pattern( in vec2 p ){
+  vec2 warp = vec2(
+    fbm(p + vec2(0.0, 0.0), 0.5),
+    fbm(p + vec2(5.2, 1.3), 0.5)
+  );
+  return fbm(p + 4.0 * warp, 0.5);
 }
 
 void main() {
   vec2 uv = gl_FragCoord.xy / u_resolution.y * 6.0;
-  // vec2 center = vec2(0.0, 0.0);
+  uv += pattern(uv + u_time * 0.1) * 0.15;
   vec2 p0 = floor(uv);  
   vec2 circles = vec2(0.0, 0.0);
   for (int y = -CELL; y <= CELL; y++){
