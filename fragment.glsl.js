@@ -1,21 +1,20 @@
-// current heavy inspiration from https://www.shadertoy.com/view/ldfyzl
 // aid from https://iquilezles.org/
 export default `#version 300 es
 precision mediump float;
 
 #define CELL 2
 #define numOctaves 1
-#define HASHSCALE1 .1031
-#define HASHSCALE3 vec3(.1031, .1030, .0973)
+#define RANDOM1 .5241
+#define RANDOM2 vec3(.1234, .4321, .5317)
 
-float hash12(vec2 p) {
-  vec3 p3 = fract(vec3(p.xyx) * HASHSCALE1);
+float random1(vec2 p) {
+  vec3 p3 = fract(vec3(p.xyx) * RANDOM1);
   p3 += dot(p3, p3.yzx + 19.19);
   return fract((p3.x + p3.y) * p3.z);
 }
 
-vec2 hash22(vec2 p) {
-  vec3 p3 = fract(vec3(p.xyx) * HASHSCALE3);
+vec2 random2(vec2 p) {
+  vec3 p3 = fract(vec3(p.xyx) * RANDOM2);
   p3 += dot(p3, p3.yzx + 19.19);
   return fract((p3.xx + p3.yz) * p3.zy);
 }
@@ -36,8 +35,8 @@ float noise(vec2 p) {
   vec2 f = fract(p);
   vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
   return mix(
-    mix(hash12(i),             hash12(i + vec2(1,0)), u.x),
-    mix(hash12(i + vec2(0,1)), hash12(i + vec2(1,1)), u.x),
+    mix(random1(i),             random1(i + vec2(1,0)), u.x),
+    mix(random1(i + vec2(0,1)), random1(i + vec2(1,1)), u.x),
     u.y
   );
 }
@@ -67,24 +66,27 @@ float pattern( in vec2 p ){
 
 void main() {
   vec2 uv = gl_FragCoord.xy / u_resolution.y * 6.0;
-  uv += pattern(uv + u_time * 0.1) * 0.105;
+  uv += pattern(uv + u_time * 0.1) * 0.0825;
   vec2 p0 = floor(uv);  
   vec2 circles = vec2(0.0, 0.0);
   for (int y = -CELL; y <= CELL; y++){
     for (int x = -CELL; x <= CELL; x++){
       vec2 pi = p0 + vec2(x, y); // neighbor cell
-      vec2 p = pi + hash22(pi); // random pos ripple start in a cell
-      float t = fract(0.3 * u_time + hash12(pi)); // random lifecycle 0->1
+      if (random1(pi + 3.2) > 0.211) continue; // change value here for drop frequency
+      vec2 p = pi + random2(pi); // random pos ripple start in a cell
+
+      // also deals with speed of drop expansion and speed in general
+      float expandT = fract(0.456 * u_time + random1(pi)); // random lifecycle 0->1
 
       vec2 v = p - uv; // vector from drop to pixel
-      float d = length(v) - float(CELL + 1) * t; // ring SDF
+      float d = length(v) - float(CELL + 1) * expandT; // ring SDF
 
       float h = 1e-3;
       float d1 = d - h;
       float d2 = d + h;
       float p1 = sin(25.0 * d1) * smoothQuintic(-0.6, -0.3, d1) * smoothQuintic(0.01  , -0.3, d1);
       float p2 = sin(25.0 * d2) * smoothQuintic(-0.6, -0.3, d2) * smoothQuintic(0.01, -0.3, d2);
-      circles += 0.5 * normalize(v) * ((p2 - p1) / (2.0 * h) * (1.0 - t) * (1.0 - t));
+      circles += 0.5 * normalize(v) * ((p2 - p1) / (2.0 * h) * (1.0 - expandT) * (1.0 - expandT));
     }
   }
   circles /= float((CELL*2+1)*(CELL*2+1));
