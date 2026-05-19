@@ -4,19 +4,16 @@ precision mediump float;
 
 #define CELL 2
 #define numOctaves 1
-#define RANDOM1 .5241
-#define RANDOM2 vec3(.1234, .4321, .5317)
 
 float random1(vec2 p) {
-  vec3 p3 = fract(vec3(p.xyx) * RANDOM1);
-  p3 += dot(p3, p3.yzx + 19.19);
-  return fract((p3.x + p3.y) * p3.z);
+  return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
 vec2 random2(vec2 p) {
-  vec3 p3 = fract(vec3(p.xyx) * RANDOM2);
-  p3 += dot(p3, p3.yzx + 19.19);
-  return fract((p3.xx + p3.yz) * p3.zy);
+  return vec2(
+    fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453),
+    fract(sin(dot(p, vec2(31.233, 56.9898))) * 43758.5453)
+  );
 }
 
 uniform vec2 u_resolution;
@@ -72,11 +69,14 @@ void main() {
   for (int y = -CELL; y <= CELL; y++){
     for (int x = -CELL; x <= CELL; x++){
       vec2 pi = p0 + vec2(x, y); // neighbor cell
-      if (random1(pi + 3.2) > 0.211) continue; // change value here for drop frequency
-      vec2 p = pi + random2(pi); // random pos ripple start in a cell
 
+      // change value here for drop frequency
+      if (random1(pi + 3.2) > 0.211) continue;
+
+      vec2 p = pi + random2(pi); // random pos ripple start in a cell
       // also deals with speed of drop expansion and speed in general
-      float expandT = fract(0.456 * u_time + random1(pi)); // random lifecycle 0->1
+      float speed = 0.456 + (random1(pi + 5.1) - 0.324) * 0.471;
+      float expandT = fract(speed * u_time + random1(pi)); // random lifecycle 0->1
 
       vec2 v = p - uv; // vector from drop to pixel
       float d = length(v) - float(CELL + 1) * expandT; // ring SDF
@@ -84,7 +84,7 @@ void main() {
       float h = 1e-3;
       float d1 = d - h;
       float d2 = d + h;
-      float p1 = sin(25.0 * d1) * smoothQuintic(-0.6, -0.3, d1) * smoothQuintic(0.01  , -0.3, d1);
+      float p1 = sin(25.0 * d1) * smoothQuintic(-0.6, -0.3, d1) * smoothQuintic(0.01, -0.3, d1);
       float p2 = sin(25.0 * d2) * smoothQuintic(-0.6, -0.3, d2) * smoothQuintic(0.01, -0.3, d2);
       circles += 0.5 * normalize(v) * ((p2 - p1) / (2.0 * h) * (1.0 - expandT) * (1.0 - expandT));
     }
