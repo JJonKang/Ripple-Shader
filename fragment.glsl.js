@@ -65,7 +65,7 @@ float pattern( in vec2 p ){
 }
 
 void main() {
-  vec2 uv = gl_FragCoord.xy / u_resolution.y * 6.0;
+  vec2 uv = gl_FragCoord.xy / u_resolution.y * 12.0;
   uv += pattern(uv + u_time * 0.1) * 0.0825;
   vec2 p0 = floor(uv);  
   vec2 circles = vec2(0.0, 0.0);
